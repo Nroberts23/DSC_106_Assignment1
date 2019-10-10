@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="d3.min.js"></script>
+</head>
+
+<div id="div1">
+<p>
+    This did in fact change.
+</p>
+</div>
+<body>
+    <script>
+        var width = 500
+            height = 500
+            margin = 40
+
+        var radius = width / 2 - margin
+        var svg = d3.select("#div1")
+            .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+            .append("g")
+                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+                
+        var data =
+        d3.csv("http://0.0.0.0:8000/ucsd_cds_admission_data_2005_to_2018.csv").then(function(data)
+        {
+            var women_app = data[3]["fulltime_women_applied"].replace(/,/g, '')
+                men_app = data[3]["fulltime_men_applied"].replace(/,/g, '')
+                app_comb = {"men": Number(men_app), "women": Number(women_app)}
+            console.log(men_app)
+            var color = d3.scaleOrdinal()
+                .domain(app_comb)
+                .range(["#98abc5", "#8a89a6"])
+
+            var pie = d3.pie()
+                .value(function(d) {return d.value; })
+            var data_ready = pie(d3.entries(app_comb))
+            
+            console.log(data_ready);
+            console.log(pie.value());
+            svg
+                .selectAll("whatever")
+                .data(data_ready)
+                .enter()
+                .append('path')
+                .attr('d', d3.arc()
+                    .innerRadius(0)
+                    .outerRadius(radius)
+                )
+                .attr('fill', function(d){return(color(d.data.key)) })
+                .attr("stroke", "black")
+                .style("stroke-width", "2px")
+                .style("opacity", 0.7)
+        });
+    </script>
+</body>
+</html>
+
