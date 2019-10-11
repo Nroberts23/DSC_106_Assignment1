@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<head>
+    <script src='d3.min.js'></script>
+</head>
+
+<div id="lineGraph">
+    <p>
+        Acceptance Rate for UCSD Between 2018 and 2005
+    </p>
+</div>
+
+<body>
+    <script>
+        var marg_t = 10,
+            marg_r = 30,
+            marg_b = 50,
+            marg_l = 60,
+            width = 460 - marg_l - marg_r,
+            height = 400 - marg_t - marg_b;
+
+        var svg = d3.select("#lineGraph")
+            .append("svg")
+                .attr('width', width + marg_l + marg_r)
+                .attr('height', height +marg_t + marg_b)
+            .append('g')
+                .attr('transform', 'translate(' + marg_l + ',' + marg_t + ')');
+
+        var data =
+            d3.csv("http://0.0.0.0:8000/ucsd_cds_admission_data_2005_to_2018.csv").then(function(data)
+            {
+                var arrayColumn = (arr, n) => arr.map(x => x[n]);
+                function convertToInt(d){
+                    return parseInt(d.replace(/,/g, ''));
+                }
+
+                var years = arrayColumn(data, 'year').map(convertToInt),
+                    men_app = arrayColumn(data,
+                        'fulltime_men_applied').map(convertToInt),
+                    women_app = arrayColumn(data,
+                        'fulltime_women_applied').map(convertToInt),
+                    men_acc = arrayColumn(data,
+                        'fulltime_men_admitted').map(convertToInt),
+                    women_acc = arrayColumn(data,
+                        'fulltime_women_admitted').map(convertToInt);
+
+                var acc_rate = [],
+                    the_years = [];
+
+                for (i = 0; i < men_app.length; i++){
+                    var applied = men_app[i] + women_app[i];
+                    var admitted = men_acc[i] + women_acc[i];
+                    
+                    acc_rate.push(admitted / applied * 100);
+                }
+        
+                var x = d3.scaleBand()
+                    .range([0,width])
+                    .domain(years)
+                    .padding(0.2);
+                svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(x))
+                    .selectAll("text")
+                        .attr("transform", "translate(-10, 0)rotate(-45)")
+                        .style("text-anchor", "end");
+
+                svg.append("text")
+                    .attr("transform", "translate(" + (width/2) + " ," +
+                         (height + marg_b ) + ")")
+                    .style("text-anchor", "middle")
+                    .text("Year");
+
+                var y = d3.scaleLinear()
+                    .domain([0, 60])
+                    .range([height, 0]);
+                svg.append("g")
+                    .call(d3.axisLeft(y));
+            
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - marg_l)
+                    .attr("x",0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Acceptance Rate (Percentage of Applicants)");
+            
+                svg.append("path")
+                    .datum(acc_rate)
+                    .attr("fill", "none")
+                    .attr("stroke", "steelblue")
+                    .attr("stroke-width", 1.5)
+                    .attr("d", d3.line()
+                        .x(function(d) { return x(years[acc_rate.indexOf(d)]) })
+                        .y(function(d) { return y(d) })
+                        )
+            });
+    </script>
+</body>
+</html>
